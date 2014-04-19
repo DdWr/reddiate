@@ -15,7 +15,7 @@
     <div id="stage"></div>
     <script type="text/javascript" src="js/viz.js"></script>
     <script type="text/javascript">
-      start();
+      loadData("none");
     </script>
   </body>
 </html>
