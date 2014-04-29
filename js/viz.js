@@ -1,5 +1,6 @@
 (function(){
 
+    var domainColors = {};
     var N = 250;          //Data count to store in each buffer
     var dataArray = [];   //Data buffer
     var prevNodeTime = 0; //Time from the last frame in which an object was created
@@ -10,15 +11,18 @@
     var maxScore;
     var size = 900;
 
+    setDomainColors();
+
     //Create stage to draw to
     var stage = new Kinetic.Stage({
         container: 'stage',
         width: size,
         height: size
-     });
+    });
 
     //Create root layer and add it to the canvas
     var rootLayer = new Kinetic.Layer();
+
     stage.add(rootLayer);
 
     var onScreen;
@@ -26,7 +30,7 @@
     //Start animation sequence
     function start(){
 
-        var centerX = stage.width() / 2;
+        var centerX = size / 2;
         var centerY = centerX;
         var circle;
         var onScreen = new Kinetic.Group();
@@ -49,17 +53,41 @@
             }
 
             //Animate first object
-            if(counter == 0 || timeDiff > 1000){
+            if(counter == 0 || timeDiff > 500){
+
+                var imageObj = new Image();
+                imageObj.onload = function() {
+                  var image = new Kinetic.Image({
+                    image: imageObj
+                  });
+                };
+
+                //Set image to thumb if available, otherwise use placeholder
+                if(dataArray[counter]["thumbnail"].indexOf("http://") > -1){
+                    imageObj.src = dataArray[counter]["thumbnail"];
+                }
+                else{
+                    imageObj.src = 'img/default_thumb.png';
+                }
+
+                //Get domain color
+                var strokeColor = domainColors[dataArray[counter]["domain"]];
+
+                if(strokeColor == null){
+                    strokeColor = "#000";
+                }
 
                 //Create visual representation
                 circle = new Kinetic.Circle({
                     x: stage.width() / 2,
                     y: stage.height() / 2,
-                    radius: 0,
-                    fill: 'red',
-                    stroke: 'black',
+                    radius: 1,
+                    stroke: strokeColor,
                     strokeWidth: 2,
+                    fillPatternImage: imageObj,
+                    fillPatternOffset: {x: -50, y: -50}
                 });
+
 
                 //Get normalized angle (between 0 and 360)
                 circle.angle = normalize(parseInt(minScore), parseInt(maxScore), 0, 360, parseInt(dataArray[counter]["score"]));
@@ -83,7 +111,10 @@
                 //Modify node parameters based on distance so we don't have to spawn new function objects for each (slow)
                 var distanceMoved = Math.sqrt(Math.pow((onScreen[i].x() - centerX), 2) + Math.pow((onScreen[i].y() - centerY), 2));
 
+                //Radius
                 onScreen[i].radius((distanceMoved / centerX) * 35);
+
+                //Stroke width
                 onScreen[i].strokeWidth((distanceMoved / centerX) * 5);
 
                 //Start fading out
@@ -139,6 +170,16 @@
         var newRange = newMax - newMin;
         var newNum   = ((Math.abs(num - oldMin) * newRange) / oldRange) + newMin;
         return newNum;
+    }
+
+    //Set up colors for top submission domains
+    function setDomainColors(){
+        domainColors["youtube.com"]     = "#e52d27";
+        domainColors["youtu.be"]        = "#e52d27";
+        domainColors["twitter.com"]     = "#55ACEE";
+        domainColors["imgur.com"]       = "#85BF25";
+        domainColors["i.imgur.com"]     = "#85BF25";
+        domainColors["arstechnica.com"] = "#FF4E00";
     }
 
     /* Bind functions to outer scope */

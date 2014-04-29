@@ -10,11 +10,11 @@
         width: 900px;
         height: 900px;
         border-radius: 450px;
-        background-color: #ececec;
+        background-color: #f7f7f7;
+        background-image: url('img/grid.png');
       }
     </style>
     <script src="js/jquery-2.1.0.min.js"></script>
-    <script src="js/raphael-min.js"></script>
     <script src="js/kinetic-v5.1.0.min.js"></script>
 
   </head>
