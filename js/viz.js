@@ -1,4 +1,8 @@
-(function(){
+/* David Weber
+   Reddit Visualization
+*/
+
+//(function(){
 
     var domainColors = {};
     var N = 250;          //Data count to store in each buffer
@@ -10,7 +14,8 @@
     var minScore;
     var maxScore;
     var size = 900;
-
+    var maxSpeed = 6;
+    var anim;
     setDomainColors();
 
     //Create stage to draw to
@@ -40,7 +45,7 @@
         var normUTCDiff;
 
         //Main animation loop
-        var anim = new Kinetic.Animation(function(frame) {
+        anim = new Kinetic.Animation(function(frame) {
 
             if(counter > 0){
                 //Check to see if the normalized time duration between previous item and the next
@@ -92,6 +97,7 @@
                 //Get normalized angle (between 0 and 360)
                 circle.angle = normalize(parseInt(minScore), parseInt(maxScore), 0, 360, parseInt(dataArray[counter]["score"]));
 
+
                 //console.log(circle.angle);
                 counter++;
 
@@ -111,10 +117,10 @@
                 //Modify node parameters based on distance so we don't have to spawn new function objects for each (slow)
                 var distanceMoved = Math.sqrt(Math.pow((onScreen[i].x() - centerX), 2) + Math.pow((onScreen[i].y() - centerY), 2));
 
-                //Radius
-                onScreen[i].radius((distanceMoved / centerX) * 35);
+                //Radius (max: 40)
+                onScreen[i].radius((distanceMoved / centerX) * 40);
 
-                //Stroke width
+                //Stroke width (max: 5)
                 onScreen[i].strokeWidth((distanceMoved / centerX) * 5);
 
                 //Start fading out
@@ -125,9 +131,10 @@
                 if(distanceMoved > centerX + 20){
                     onScreen[i].hide();
                 } else {
-                    //Otherwise, keep animating it outward
-                    var newX = onScreen[i].x() + 2 * Math.cos(onScreen[i].angle * (Math.PI / 180));
-                    var newY = onScreen[i].y() + 2 * Math.sin(onScreen[i].angle * (Math.PI / 180));
+                    //Adjust speed based on distance from center
+                    var currSpeed = 1 + maxSpeed * (distanceMoved / centerX);
+                    var newX = onScreen[i].x() + currSpeed * Math.cos(onScreen[i].angle * (Math.PI / 180));
+                    var newY = onScreen[i].y() + currSpeed * Math.sin(onScreen[i].angle * (Math.PI / 180));
                     onScreen[i].setX(newX);
                     onScreen[i].setY(newY);
                 }
@@ -185,5 +192,5 @@
     /* Bind functions to outer scope */
     window.start = start;
     window.loadData = loadData;
-})();
+//})();
 
