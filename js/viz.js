@@ -14,7 +14,7 @@
     var minScore;
     var maxScore;
     var size = 900;
-    var maxSpeed = 6;
+    var maxSpeed = 2;
     var anim;
     setDomainColors();
 
@@ -92,7 +92,6 @@
                     fillPatternImage: imageObj,
                     fillPatternOffset: {x: -50, y: -50}
                 });
-
 
                 //Get normalized angle (between 0 and 360)
                 circle.angle = normalize(parseInt(minScore), parseInt(maxScore), 0, 360, parseInt(dataArray[counter]["score"]));

@@ -22,7 +22,7 @@
         height: 900px;
         border-radius: 450px;
         background-color: #f7f7f7;
-        background-image: url('img/grid.png');
+        background-image: url('img/galaxy.jpg');
       }
       #controls {
         margin: 50px 0 70px 70px;
