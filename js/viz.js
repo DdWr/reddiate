@@ -11,12 +11,12 @@
     var counter = 0;      //Number of objects processed
     var minTime;          //The lowest time value (for normalization)
     var maxTime;          //The highest time value (for normalization)
-    var minScore;
-    var maxScore;
-    var size = 900;
-    var maxSpeed = 2;
-    var anim;
-    setDomainColors();
+    var minScore;         //      ""    score    ""
+    var maxScore;         //      ""    score    ""
+    var size = 900;       //Our canvas size
+    var maxSpeed = 2;     //Maximum speed that objects approach boundary
+    var anim;             //Animation reference
+    setDomainColors();    //Create a dictionary of colors for the most popular submission domains
 
     //Create stage to draw to
     var stage = new Kinetic.Stage({
@@ -27,7 +27,6 @@
 
     //Create root layer and add it to the canvas
     var rootLayer = new Kinetic.Layer();
-
     stage.add(rootLayer);
 
     var onScreen;
@@ -116,8 +115,8 @@
                 //Modify node parameters based on distance so we don't have to spawn new function objects for each (slow)
                 var distanceMoved = Math.sqrt(Math.pow((onScreen[i].x() - centerX), 2) + Math.pow((onScreen[i].y() - centerY), 2));
 
-                //Radius (max: 40)
-                onScreen[i].radius((distanceMoved / centerX) * 40);
+                //Radius (max: 45)
+                onScreen[i].radius((distanceMoved / centerX) * 45);
 
                 //Stroke width (max: 5)
                 onScreen[i].strokeWidth((distanceMoved / centerX) * 5);
@@ -155,6 +154,7 @@
             url: "php/getData.php",
             success: function(data){
                 var json = JSON.parse(data);
+                //Extract min and max time interval while processing data
                 for(var i = 0; i < json["data"].length; i++){
                     dataArray.push(json["data"][i]);
                 }

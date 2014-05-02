@@ -40,7 +40,7 @@
     <h2 id="title">Reddit Visualization</h2>
 
     <div id="stage"></div>
-    <div id="controls"></div>
+    <div id="controls" style="text-align: center">Controls go here</div>
     <script type="text/javascript" src="js/viz.js"></script>
     <script type="text/javascript">
       loadData("none");
