@@ -1,0 +1,50 @@
+body {
+  margin: 0px;
+  padding: 0px;
+  font-family: sans-serif;
+  color: #262626;
+}
+#stage {
+  margin: 30px 0 0 30px;
+  width: 900px;
+  height: 900px;
+  border-radius: 450px;
+  background-color: #f7f7f7;
+  background-image: url('../img/galaxy.jpg');
+}
+#controls {
+  margin: 50px 0 70px 70px;
+  width: 900px;
+  height: 240px;
+  background-color: #f7f7f7;
+  border: 1px solid #cccccc;
+}
+#guide{
+  top: 20px;
+  left: 20px;
+  position: absolute;
+}
+#highest, #lowest{
+  font-size: 18px;
+  position: absolute;
+}
+#highest{
+  color: #ff4500;
+  left: 950px;
+  top: 448px;
+  -webkit-transform:rotate(-5deg);
+}
+#lowest{
+  color: #336699;
+  left: 950px;
+  top: 498px;
+  -webkit-transform:rotate(5deg);
+}
+#ctrlsBtn{
+  z-index: 9999;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 22px;
+  cursor: pointer;
+}

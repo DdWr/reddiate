@@ -57,7 +57,7 @@ function start(){
         }
 
         //Animate first object
-        if(counter == 0 || timeDiff > 100){
+        if(counter == 0 || timeDiff > 200){
 
             var imageObj = new Image();
             imageObj.onload = function() {
@@ -171,7 +171,8 @@ function loadData(sub_id){
             maxTime  = json["maxTime"];
             minScore = json["minScore"];
             maxScore = json["maxScore"];
-
+            $("#lowest").html(minTime);
+            $("#highest").html(maxTime);
             //Run animation with data
             start();
         }
