@@ -102,6 +102,23 @@ function start(){
             //Get normalized angle (between 0 and 360)
             circle.angle = normalize(parseInt(minScore), parseInt(maxScore), 0, 360, parseInt(dataArray[counter]["ups"]));
 
+            circle.on('click', function() {
+                if(circle.clicked){
+                    anim.start();
+                    circle.clicked = false;
+                    var mousePos = stage.getPointerPosition();
+                    var x = mousePos.x;
+                    var y = mousePos.y;
+                    console.log(x, y);
+                }
+                else{
+                    console.log('Clicked!');
+                    anim.stop();
+                    circle.clicked = true;
+                }
+                console.log('Clicked!');
+            });
+
             //console.log(circle.angle);
             counter++;
 
@@ -161,7 +178,6 @@ function loadData(sub_id){
         success: function(data){
             var json = JSON.parse(data);
 
-
             //Extract min and max time interval while processing data
             for(var i = 0; i < json["data"].length; i++){
                 dataArray.push(json["data"][i]);
@@ -172,7 +188,7 @@ function loadData(sub_id){
             minScore = json["minScore"];
             maxScore = json["maxScore"];
             $("#lowest").html(minTime);
-            $("#highest").html(maxTime);
+            $("#highest").html(minTime);
             //Run animation with data
             start();
         }

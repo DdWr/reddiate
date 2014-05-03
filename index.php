@@ -9,15 +9,18 @@
   </head>
   <body>
     <span id="ctrlsBtn" class="glyphicon glyphicon-cog"></span>
+    <span id="playBtn"  class="glyphicon glyphicon-play"></span>
     <img id="guide" src="img/guide.png" />
     <div id="stage"></div>
     <span id="highest"></span>
     <span id="lowest"></span>
-    <div id="controls" style="text-align: center; display: none;">Controls go here</div>
     <script type="text/javascript" src="js/viz.js"></script>
     <script type="text/javascript">
       loadData("none");
       $("#ctrlsBtn").click(function(e){
+        alert("clicked!");
+      });
+      $("#playBtn").click(function(e){
         alert("clicked!");
       });
     </script>
