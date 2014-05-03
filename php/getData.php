@@ -1,22 +1,23 @@
 <?php
+	error_reporting(E_ALL);
 
 	$db = new mysqli("localhost", "root", "root", "reddit") or die(mysqli_error($db));
 
-	$result = $db->query("SELECT created_utc, score, domain, thumbnail FROM data ORDER BY created_utc ASC") or die(mysqli_error($db));
+	$query_string = "SELECT created_utc, score, domain, ups, downs, thumbnail FROM data ORDER BY created_utc DESC";
+
+	$result = $db->query($query_string) or die(mysqli_error($db));
 
 	$response = array();
 
 	$counter = 0;
 
-	//Variables to hold the min and max time intervals for normalization
-	$minTimeDiff;
-	$maxTimeDiff;
-
 	while($row = $result->fetch_assoc()){
-
 		$response["data"][$counter]["created_utc"] = $row["created_utc"];
 		$response["data"][$counter]["score"] 	   = $row["score"];
 		$response["data"][$counter]["domain"]	   = $row["domain"];
+		$response["data"][$counter]["ups"]	   	   = $row["ups"];
+		$response["data"][$counter]["downs"]	   = $row["downs"];
+		//Parse proper image link if present
 		$response["data"][$counter]["thumbnail"]   = $row["thumbnail"];
 		$counter++;
 	}
@@ -29,9 +30,6 @@
 	$response["maxTime"]  = $result["MAX(created_utc)"];
 	$response["minScore"] = $result["MIN(score)"];
 	$response["maxScore"] = $result["MAX(score)"];
-
-	//Get min and max time intervals for normalization
-
 
 	$db->close();
 
