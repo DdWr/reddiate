@@ -6,18 +6,29 @@
 var domainColors = {};
 var N = 250;          //Data count to store in each buffer
 var dataArray = [];   //Data buffer
-var prevNodeTime = 0; //Time from the last frame in which an object was created
-var counter = 0;      //Number of objects processed
 var minTime;          //The lowest time value (for normalization)
 var maxTime;          //The highest time value (for normalization)
 var minScore;         //      ""    score    ""
 var maxScore;         //      ""    score    ""
+var minUps;
+var maxUps;
+var minDowns;
+var maxDowns;
+var minComments;
+var maxComments;
 var size = 900;       //Our canvas size
 var maxSpeed = 3;     //Maximum speed that objects approach boundary
 var anim;             //Animation reference
+var nodeAngleParam = "ups";
+var minAngleParam;
+var maxAngleParam;
+var minRadiusParam;
+var maxRadiusParam;
+var nodeRadiusParam ="score";
 var minInterval;
 var maxInterval;
-
+var clampFactor = .3;
+var counter = 0;      //Number of objects processed
 setDomainColors();    //Create a dictionary of colors for the most popular submission domains
 
 //Create stage to draw to
@@ -35,16 +46,23 @@ var onScreen;
 
 //Start animation sequence
 function start(){
+    console.log(nodeAngleParam);
 
     var centerX = size / 2;
     var centerY = centerX;
     var circle;
     var onScreen = new Kinetic.Group();
-    var timeDiff;
+    var timeDiff = 0;
     var nextNodeUTC;
     var currNodeUTC;
     var normUTCDiff;
+    var prevNodeTime = 0; //Time from the last frame in which an object was created
 
+    //Clear any child nodes in the canvas
+    if(anim != null && anim.isRunning()){
+       anim.stop();
+       rootLayer.removeChildren();
+    }
     //Main animation loop
     anim = new Kinetic.Animation(function(frame) {
 
@@ -57,8 +75,7 @@ function start(){
         }
 
         //Animate first object
-        if(counter == 0 || timeDiff > 200){
-
+        if(counter == 0 || timeDiff >= 80){
             var imageObj = new Image();
             imageObj.onload = function() {
               var image = new Kinetic.Image({
@@ -67,10 +84,9 @@ function start(){
             };
 
             //Set image to thumb if available, otherwise use placeholder
-            if(dataArray[counter]["thumbnail"].indexOf("http://") > -1){
+            if(dataArray[counter]["thumbnail"].indexOf("http://") > -1 && dataArray[counter]["thumbnail"] != null){
                 imageObj.src = dataArray[counter]["thumbnail"];
-            }
-            else{
+            } else{
                 imageObj.src = 'img/default_thumb.png';
             }
 
@@ -90,17 +106,17 @@ function start(){
             circle = new Kinetic.Circle({
                 x: stage.width() / 2,
                 y: stage.height() / 2,
-                radius: 1,
+                radius: 0,
                 stroke: strokeColor,
                 strokeWidth: 2,
                 fillPatternImage: imageObj,
-                fillPatternX: 100,
-                fillPatternY: 100,
-                fillPatternOffset: {x: -50, y: 50}
+                fillPatternOffset: {x: -50, y: -60}
             });
 
             //Get normalized angle (between 0 and 360)
-            circle.angle = normalize(parseInt(minScore), parseInt(maxScore), 0, 360, parseInt(dataArray[counter]["ups"]));
+            circle.angle = normalize(minAngleParam, maxAngleParam * clampFactor, 0, 360, parseInt(dataArray[counter][nodeAngleParam]));
+
+            circle.maxRadius = normalize(minRadiusParam, maxRadiusParam, 20, 100, parseInt(dataArray[counter][nodeRadiusParam]));
 
             circle.on('click', function() {
                 if(circle.clicked){
@@ -121,7 +137,9 @@ function start(){
 
             //console.log(circle.angle);
             counter++;
-
+            $("#progress").slider("value", counter);
+            $("#progLabel").html(counter + "/" + dataArray.length);
+            console.log("Counter: ", counter, "Slider" ,$("#progress").slider("value"));
             //Add new object to root layer
             rootLayer.add(circle);
 
@@ -138,11 +156,11 @@ function start(){
             //Modify node parameters based on distance so we don't have to spawn new function objects for each (slow)
             var distanceMoved = Math.sqrt(Math.pow((onScreen[i].x() - centerX), 2) + Math.pow((onScreen[i].y() - centerY), 2));
 
-            //Radius (max: 45)
-            onScreen[i].radius((distanceMoved / centerX) * 45);
+            //Radius
+            onScreen[i].radius((distanceMoved / centerX) * onScreen[i].maxRadius);
 
-            //Stroke width (max: 5)
-            onScreen[i].strokeWidth((distanceMoved / centerX) * 5);
+            //Stroke width (max: 3)
+            onScreen[i].strokeWidth((distanceMoved / centerX) * 3);
 
             //Start fading out
             if(distanceMoved < centerX && distanceMoved > (centerX - 50)){
@@ -182,14 +200,38 @@ function loadData(sub_id){
             for(var i = 0; i < json["data"].length; i++){
                 dataArray.push(json["data"][i]);
             }
-
             minTime  = json["minTime"];
             maxTime  = json["maxTime"];
             minScore = json["minScore"];
             maxScore = json["maxScore"];
-            $("#lowest").html(minTime);
-            $("#highest").html(minTime);
-            //Run animation with data
+            minDowns = json["minDowns"];
+            maxDowns = json["maxDowns"];
+            minUps = json["minUps"];
+            maxUps = json["maxUps"];
+            minComments = json["minComments"];
+            maxComments = json["maxComments"];
+            minAngleParam  = parseInt(minUps);
+            maxAngleParam  = parseInt(maxUps);
+            minRadiusParam = parseInt(minUps);
+            maxRadiusParam = parseInt(maxUps);
+            $("#lowest").html(minUps);
+            $("#highest").html(maxUps);
+
+
+
+            $("#progress").slider();
+            $("#progress").slider("option", "max", dataArray.length);
+            $("#progress").on("slide",function(e){
+                anim.stop();
+                rootLayer.removeChildren();
+                counter = $("#progress").slider("value");
+                console.log("Counter: ", counter);
+                $("#progress").slider("value", counter);
+            }).on("slidechange", function(e){
+                anim.start();
+            });
+
+              //Run animation with data
             start();
         }
     });
@@ -199,7 +241,7 @@ function loadData(sub_id){
 function normalize(oldMin, oldMax, newMin, newMax, num){
     var oldRange = oldMax - oldMin;
     var newRange = newMax - newMin;
-    var newNum   = ((Math.abs(num - oldMin) * newRange) / oldRange) + newMin;
+    var newNum   = (((num - oldMin) * newRange) / oldRange) + newMin;
     return newNum;
 }
 
