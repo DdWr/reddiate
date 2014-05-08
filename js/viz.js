@@ -2,19 +2,20 @@
    Reddit Visualization
 */
 
-var domainColors = {};
+var domainColors = {};//Domain name colors
 var N = 250;          //Data count to store in each buffer
 var dataArray = [];   //Data buffer
-var params = {};
+var params = {};      //This object holds the  visualization parameters
 var size = 900;       //Our canvas size
 var maxSpeed = 3;     //Maximum speed that objects approach boundary
-var maxRadius = 80;
+var maxRadius = 90;   //Default max radius
 var anim;             //Animation reference
-var nodeAngleParam = "ups";
-var nodeRadiusParam ="score";
-var angleClampFactor = .3;
-var radiusClampFactor = 1.0;
+var nodeAngleParam = "ups"; //Default angle parameter
+var nodeRadiusParam ="score"; //Default radius parameter
+var angleClampFactor = .3;   //Clamp values used to "trim" highest values for a more even normalization distribution
+var radiusClampFactor = .3;
 var counter = 0;      //Number of objects processed
+var onScreen;         //Group of objects in layer
 
 setDomainColors();    //Create a dictionary of colors for the most popular submission domains
 
@@ -30,6 +31,7 @@ var rootLayer = new Kinetic.Layer();
 rootLayer.clicked = false;
 stage.add(rootLayer);
 
+//If stage is clicked, stop the animation
 $(stage.getContent()).on('click', function(e) {
     if(stage.clicked){
         anim.start();
@@ -41,19 +43,15 @@ $(stage.getContent()).on('click', function(e) {
     }
 });
 
-var onScreen;
 
 //Start animation sequence
 function start(){
 
-    var centerX = size / 2;
-    var centerY = centerX;
-    var circle;
+    var centerX = size / 2; //Center of canvas (X)
+    var centerY = centerX;  //Center of canvas (Y)
+    var circle;             //Circle object for each submission
     var onScreen = new Kinetic.Group();
-    var timeDiff = 0;
-    var nextNodeUTC;
-    var currNodeUTC;
-    var normUTCDiff;
+    var timeDiff = 0;       //Time difference between previous and next node
     var prevNodeTime = 0; //Time from the last frame in which an object was created
 
     //Clear any child nodes in the canvas
@@ -67,13 +65,10 @@ function start(){
         if(counter > 0){
             //Check to see if the normalized time duration between previous item and the next
             timeDiff = (frame.time - prevNodeTime);
-            nextNodeUTC = parseInt(dataArray[counter]["created_utc"]);
-            currNodeUTC = parseInt(dataArray[counter - 1]["created_utc"]);
-            normUTCDiff = normalize(params["minTime"] / 100, params["maxTime"] / 100, 0, 10, nextNodeUTC - currNodeUTC) * .05;
         }
 
         //Animate first object
-        if(counter == 0 || timeDiff >= 80){
+        if(counter == 0 || timeDiff >= 50){
             var imageObj = new Image();
             imageObj.onload = function() {
               var image = new Kinetic.Image({
@@ -96,11 +91,6 @@ function start(){
                 strokeColor = "#000";
             }
 
-            //Generate random starting position
-            var startX, startY;
-            startX = getRandomNumber(350, 500);
-            startY = getRandomNumber(350, 500);
-
             //Create visual representation
             circle = new Kinetic.Circle({
                 x: stage.width() / 2,
@@ -112,10 +102,11 @@ function start(){
                 fillPatternOffset: {x: -50, y: -60}
             });
 
+            //Get value from node that is currently used to calculate angle and radius
             var angleParam = dataArray[counter][nodeAngleParam];
             var radiusParam = dataArray[counter][nodeRadiusParam];
 
-            //Clamp this value if it exceeds the clamped maximum
+            //Clamp these values if they exceed the clamped maximum
             if(angleParam > params["maxAngleParam"] * angleClampFactor){
                 angleParam = params["maxAngleParam"] * angleClampFactor;
             }
@@ -127,8 +118,6 @@ function start(){
             //Get normalized angle (between 0 and 360)
             circle.angle = normalize(params["minAngleParam"], params["maxAngleParam"] * angleClampFactor, 0, 360, angleParam);
             circle.maxRadius = normalize(params["minRadiusParam"], params["maxRadiusParam"] * radiusClampFactor, 20, maxRadius, radiusParam);
-
-            //console.log("Max radius: ", circle.maxRadius);
 
             var node = dataArray[counter];
 
@@ -162,10 +151,10 @@ function start(){
             //Modify node parameters based on distance so we don't have to spawn new function objects for each (slow)
             var distanceMoved = Math.sqrt(Math.pow((onScreen[i].x() - centerX), 2) + Math.pow((onScreen[i].y() - centerY), 2));
 
-            //Radius
+            //Increase node radius based on distance ("coming at you" effect)
             onScreen[i].radius((distanceMoved / centerX) * onScreen[i].maxRadius);
 
-            //Stroke width (max: 3)
+            //Increase stroke width based on distance
             onScreen[i].strokeWidth((distanceMoved / centerX) * 3);
 
             //Start fading out
@@ -173,11 +162,14 @@ function start(){
                 onScreen[i].opacity(1 - ((distanceMoved - 400) / 50));
             }
 
+            //Remove object from layer if it is out of the current view
             if(distanceMoved > centerX + 20){
                 onScreen[i].remove();
             } else {
                 //Adjust speed based on distance from center
                 var currSpeed = 1 + maxSpeed * (distanceMoved / centerX);
+
+                //Move node in proper direction
                 var newX = onScreen[i].x() + currSpeed * Math.cos(onScreen[i].angle * (Math.PI / 180));
                 var newY = onScreen[i].y() + currSpeed * Math.sin(onScreen[i].angle * (Math.PI / 180));
                 onScreen[i].setX(newX);
@@ -195,7 +187,7 @@ function start(){
 }
 
 /* Fetch data from server to be rendered */
-function loadData(sub_id){
+function loadData(){
     $.ajax({
         type: "POST",
         url: "php/getData.php",
@@ -208,20 +200,21 @@ function loadData(sub_id){
                 dataArray.push(json["data"][i]);
             }
 
-            params["minTime"]     = json["minTime"];
-            params["maxTime"]     = json["maxTime"];
-            params["minScore"]    = json["maxScore"];
-            params["maxScore"]    = json["maxScore"];
-            params["minDowns"]    = json["minDowns"];
-            params["maxDowns"]    = json["maxDowns"];
-            params["minUps"]      = json["minUps"];
-            params["maxUps"]      = json["maxUps"];
-            params["minComments"] = json["minComments"];
-            params["maxComments"] = json["maxComments"];
-            params["minAngleParam"] = params["minUps"] ;
-            params["maxAngleParam"] = params["maxUps"];
-            params["minRadiusParam"] =  params["minUps"]
-            params["maxRadiusParam"] =  params["maxUps"]
+            //Populate params array with relevant data
+            params["minTime"]        = json["minTime"];
+            params["maxTime"]        = json["maxTime"];
+            params["minScore"]       = json["maxScore"];
+            params["maxScore"]       = json["maxScore"];
+            params["minDowns"]       = json["minDowns"];
+            params["maxDowns"]       = json["maxDowns"];
+            params["minUps"]         = json["minUps"];
+            params["maxUps"]         = json["maxUps"];
+            params["minComments"]    = json["minComments"];
+            params["maxComments"]    = json["maxComments"];
+            params["minAngleParam"]  = params["minUps"] ;
+            params["maxAngleParam"]  = params["maxUps"];
+            params["minRadiusParam"] = params["minUps"]
+            params["maxRadiusParam"] = params["maxUps"]
 
             $("#lowest").html(params["minUps"]);
             $("#highest").html(params["maxUps"]);
@@ -264,13 +257,9 @@ function setDomainColors(){
     domainColors["self.photography"]= "orangered";
 }
 
-function getRandomNumber(min, max){
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
+//Populate info window with data
 function showInfoForNode(node, x, y, color, src){
     $("#nodeInfo").css({"top": y, "left": x}).toggle();
-    console.log(color);
     $("#nodeInfo").css("border-color", color);
     $("#nodeTitle").html(node["title"])
     $("#nodeThumbnail").attr("src", src);
@@ -278,9 +267,11 @@ function showInfoForNode(node, x, y, color, src){
     $("#nodeDownvotes").html("Downvotes: " + node["downs"]);
     $("#nodeScore").html("Score: " + node["score"]);
     $("#nodeAuthor").html("Posted by: " + node["author"]);
+    $("#nodeDomain").html("Domain: " + node["domain"]);
     $("#nodeDate").html("Date: " + convertTime(node["created_utc"]));
 }
 
+//Convert Unix timestamp to full date and time
 function convertTime(timestamp){
     var a      = new Date(timestamp*1000);
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -290,10 +281,8 @@ function convertTime(timestamp){
     var hour   = a.getHours();
     var min    = a.getMinutes();
     var sec    = a.getSeconds();
+    if(min < 10) min = '0' + min.toString();
+    if(sec < 10) sec = '0' + sec.toString();
     var time   = month + ' '+ date +',' + year +' '+ hour +':'+min+':'+sec ;
     return time;
  }
-
-/* Bind functions to outer scope */
-window.start = start;
-window.loadData = loadData;

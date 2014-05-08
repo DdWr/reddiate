@@ -34,7 +34,7 @@
             <option value="num_comments"># Comments</option>
           </select><br />
         <label class="control-label">Radius clamp Factor (%)</label>
-        <input type="text" id="radiusClampFactor" class="form-control" placeholder="Clamping factor (0-1)" value=".5"/><br />
+        <input type="text" id="radiusClampFactor" class="form-control" placeholder="Clamping factor (0-1)" value=".3"/><br />
         <label class="control-label">Max node radius (px)</label>
         <input type="text" id="maxRadius" class="form-control" placeholder="Node radius (0 - 150)" value="80"/><br />
         <input type="button" id="updateBtn" class="btn btn-primary" value="Update" />
@@ -54,14 +54,17 @@
       <div id="nodeUpvotes"></div>
       <div id="nodeDownvotes"></div>
       <div id="nodeComments"></div>
+      <div id="nodeDomain"></div>
     </div>
 
     <script type="text/javascript" src="js/viz.js"></script>
     <script type="text/javascript">
-      var currMousePos;
 
-      loadData("none");
+      var currMousePos; //Object to hold the current mouse parameters
 
+      loadData(); //Load data and fire off animation
+
+      //Bind handler to update current mouse position for window on mousemove (for node hovering)
       $(document).ready(function(e){
           currMousePos = { x: -1, y: -1 };
 
@@ -70,10 +73,12 @@
           currMousePos.y = event.pageY;
       });
 
+      //Show/hide controls for visualization
       $("#inputBtn").click(function(e){
         $("#inputParams").fadeToggle(200);
       });
 
+      //Update visualization parameters and restart
       $("#updateBtn").click(function(e){
         nodeAngleParam    = $("#nodeAngle option:selected").val();
         nodeRadiusParam   = $("#nodeRadius option:selected").val();
@@ -135,6 +140,7 @@
         $("#playbackCtrls").fadeToggle(200);
       });
 
+      //Play button functionality
       $("#playBtn").click(function(e){
         if(!anim.isRunning()){
           anim.start();

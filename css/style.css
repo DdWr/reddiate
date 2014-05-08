@@ -22,15 +22,19 @@ body {
   position: absolute;
 }
 #highest{
+  transform: translate3d(0,0,0);
   color: #ff4500;
   left: 950px;
   top: 448px;
+  -webkit-backface-visibility: hidden;
   -webkit-transform:rotate(-5deg);
 }
 #lowest{
+  transform: translate3d(0,0,0);
   color: #336699;
   left: 950px;
   top: 498px;
+  -webkit-backface-visibility: hidden;
   -webkit-transform:rotate(5deg);
 }
 #inputBtn{

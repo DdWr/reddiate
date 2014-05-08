@@ -1,8 +1,14 @@
 <?php
-	error_reporting(E_ALL);
+	/*
+		David Weber
+		This script fetches the data from the DB, temporally ordered, and returns it as JSON
+	*/
+
+	//error_reporting(E_ALL);
 
 	$db = new mysqli("localhost", "root", "", "reddit") or die(mysqli_error($db));
 
+	//Fetch data based on time
 	$query_string = "SELECT title, author, created_utc, score, domain, ups, downs, thumbnail, url, num_comments FROM data ORDER BY created_utc DESC";
 
 	$result = $db->query($query_string) or die(mysqli_error($db));
@@ -10,6 +16,8 @@
 	$response = array();
 
 	$counter = 0;
+
+	/* Write results to array */
 
 	while($row = $result->fetch_assoc()){
 		$response["data"][$counter]["title"]        = htmlentities($row["title"], ENT_QUOTES);
@@ -22,7 +30,6 @@
 		$response["data"][$counter]["num_comments"] = $row["num_comments"];
 
 		//Parse proper image link if present
-		$response["data"][$counter]["imageURL"]	    = getImageLink($row["url"]);
 		$response["data"][$counter]["thumbnail"]    = $row["thumbnail"];
 		$counter++;
 	}
@@ -46,25 +53,3 @@
 
 	//Return the data
 	echo json_encode($response);
-
-	function getImageLink($url){
-		$extensions = array(
-			'jpg',
-			'jpeg',
-			'png',
-			'gif'
-		);
-		//Maker lower case to match extension
-		$url = strtolower($url);
-
-		$path_info = pathinfo($url);
-		//print_r($path_info);
-		//Return URL if it's an image path
-		if(isset($path_info['extension'])){
-			return $url;
-		} else if(strpos($path_info['dirname'], 'http://imgur.com') !== false && strpos($path_info['dirname'], 'http://imgur.com/a') === false) {
-		    //Attempt to get imgur file link from softlink
-			$dirname = "http://i.imgur.com";
-			return $dirname."/".$path_info['basename'].".jpg"."<br />";
-		}
-	}
